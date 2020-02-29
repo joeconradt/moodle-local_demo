@@ -46,14 +46,12 @@ class external extends \external_api
         $since = time() - ($params['days_since_activity'] * 24 * 60 * 60);
 
         $courses = $DB->get_records_sql('SELECT c.id, c.fullname, c.shortname, c.idnumber FROM {course} c
-                                         JOIN {enrol} AS e ON e.course = c.id
-                                         JOIN {user_enrolments} AS ue ON ue.enrolid = e.id
-                                         JOIN {user_lastaccess} ul ON ul.courseid = c.id AND ul.userid = ue.userid
-                                         WHERE MAX(ul.timeaccess) >= :since
+                                         WHERE (SELECT MAX(ul.timeaccess) FROM {user_lastaccess} ul WHERE ul.courseid = c.id) IS NULL 
+                                         OR (SELECT MAX(ul.timeaccess) FROM {user_lastaccess} ul WHERE ul.courseid = c.id) < :since
                                          GROUP BY c.id', [
                                              'since' => $since
         ]);
-
+        
         return [
             'courses' => $courses
         ];
